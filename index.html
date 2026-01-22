@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>những bài hát yêu thích nhất của Nguyễn Chí Dự 🇻🇳♥️🇻🇳</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            height:100vh; overflow:hidden; font-family:Arial,sans-serif; color:white; background:#000; position:relative;
+            touch-action:manipulation;
+        }
+        h1 {
+            position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:10; font-size:clamp(1.2rem,4.5vw,1.8rem);
+            text-shadow:0 0 8px rgba(255,0,0,0.8); text-align:center; white-space:nowrap; animation:glow 4s infinite alternate;
+            max-width:95%; overflow:hidden; text-overflow:ellipsis;
+        }
+        @keyframes glow { from {text-shadow:0 0 8px #ff0000;} to {text-shadow:0 0 16px #ff0000;} }
+        #player-container { position:absolute; inset:0; z-index:1; }
+        #player { width:100%; height:100%; object-fit:cover; }
+        #controls {
+            position:absolute; bottom:80px; left:50%; transform:translateX(-50%); z-index:10;
+        }
+        button {
+            background:rgba(76,175,80,0.92); color:white; border:none; padding:18px 48px; font-size:clamp(1.1rem,5vw,1.3rem);
+            border-radius:60px; cursor:pointer; box-shadow:0 0 25px rgba(76,175,80,0.7); transition:all 0.3s;
+        }
+        button:hover, button:active { transform:scale(1.08); box-shadow:0 0 40px rgba(76,175,80,1); }
+        #status {
+            position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+            font-size:clamp(0.95rem,3.8vw,1.1rem); color:#eee; text-align:center; z-index:10; padding:0 24px; max-width:90%;
+            background:rgba(0,0,0,0.4); border-radius:12px; padding:8px 16px;
+        }
+        #song-modal {
+            position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:30; padding:16px;
+        }
+        .modal-content {
+            background:rgba(30,30,30,0.95); padding:20px; border-radius:16px; max-height:85vh; overflow-y:auto;
+            width:100%; max-width:420px; text-align:center;
+        }
+        .song-item {
+            padding:16px; margin:12px 0; background:rgba(76,175,80,0.4); border-radius:14px; cursor:pointer;
+            transition:all 0.25s; font-size:clamp(1.05rem,4.5vw,1.15rem);
+        }
+        .song-item:hover { background:rgba(76,175,80,0.8); transform:scale(1.04); }
+        .close-btn { margin-top:20px; background:#ff5252; padding:14px 40px; font-size:1.1rem; }
+        .update-note {
+            margin: 20px 0 10px;
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+            color: #aaa;
+            font-style: italic;
+        }
+        /* Hiệu ứng drop cực hay */
+        #effect-overlay { position:absolute; inset:0; pointer-events:none; z-index:15; display:none; }
+        .flash-epic { animation:flashEpic 1.2s ease-out; }
+        @keyframes flashEpic { 0% {opacity:0; background:rgba(255,80,80,0.7);} 25% {opacity:0.9; background:rgba(255,220,50,0.6);} 100% {opacity:0; background:transparent;} }
+        #drop-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:clamp(3.5rem,14vw,8rem); font-weight:bold;
+            color:#fff; text-shadow:0 0 60px #ffff00,0 0 120px #ff00ff; opacity:0; z-index:20; pointer-events:none; white-space:nowrap; text-align:center; }
+        .drop-epic { animation:dropEpic 5s ease-out forwards; }
+        @keyframes dropEpic { 0% {opacity:0; transform:translate(-50%,-50%) scale(0.3) rotate(-10deg);} 10% {opacity:1; transform:translate(-50%,-50%) scale(1.6) rotate(10deg);}
+            35% {transform:translate(-50%,-50%) scale(1.1) rotate(-5deg);} 65% {transform:translate(-50%,-50%) scale(1.05) rotate(0deg);}
+            100% {opacity:0; transform:translate(-50%,-50%) scale(2) rotate(15deg);} }
+        #shake-screen { animation:shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%,90% {transform:translate3d(-4px,0,0);} 20%,80% {transform:translate3d(8px,0,0);} 30%,50%,70% {transform:translate3d(-12px,0,0);}
+            40%,60% {transform:translate3d(12px,0,0);} }
+        #particles { position:absolute; inset:0; pointer-events:none; z-index:18; overflow:hidden; }
+        .particle { position:absolute; width:14px; height:14px; background:#ffff00; border-radius:50%; box-shadow:0 0 30px #ffff00,0 0 60px #ff00ff; opacity:0; pointer-events:none; }
+    </style>
+</head>
+<body>
+    <h1>những bài hát yêu thích nhất của Nguyễn Chí Dự 🇻🇳♥️🇻🇳</h1>
+
+    <div id="player-container"><div id="player"></div></div>
+    <div id="effect-overlay"></div>
+    <div id="drop-text"></div>
+    <div id="particles"></div>
+
+    <div id="controls">
+        <button id="select-song">Chọn bài hát để phát</button>
+    </div>
+
+    <div id="status">Chọn bài hát để nghe và chờ drop siêu đỉnh nhé anh Dự!</div>
+
+    <!-- Modal danh sách yêu thích -->
+    <div id="song-modal">
+        <div class="modal-content">
+            <h2>Danh sách bài yêu thích</h2>
+            <div class="song-item" data-id="ZPuDZJk4Kpk">Em nào có tội remix</div>
+            <div class="song-item" data-id="bqOPZRiDUTM">Mở lối cho em - phần 1</div>
+            <div class="song-item" data-id="oW3ZnOOuTA4">Mở lối cho em - phần 2</div>
+            <div class="song-item" data-id="acNgISMAMzk">Mở lối cho em - phần 3</div>
+            <div class="song-item" data-id="pkDWg38-KB4">Super hero</div>
+            <div class="song-item" data-id="igvsyOvrnOY">Mây đêm chờ mấy đêm - Nguyễn Hữu Kha</div>
+            <div class="song-item" data-id="Xk8aDlC2nIM">Nắng dưới chân mây remix - HuyPT & Nguyễn Hữu Kha</div>
+            <div class="song-item" data-id="abPmZCZZrFA">Đừng làm trái tim anh đau - Sơn Tùng M-TP</div>
+            <div class="song-item" data-id="30KI5SuECuc">Âm thầm bên em - Sơn Tùng M-TP</div>
+            <div class="song-item" data-id="d5Co9mMkTUw">Hẹn hò nhưng không yêu remix</div>
+            <div class="song-item" data-id="xUgHL-6_QS4">Mạnh bà - Linh Hương Luz</div>
+            <div class="song-item" data-id="T6_NLQjxvVo">Có mình và ta remix</div>
+
+            <!-- Dòng thông báo mới thêm, ngay dưới danh sách, gần nút Đóng -->
+            <div class="update-note">"Bài hát mới sẽ cập nhật ở đây nếu có"</div>
+
+            <button class="close-btn" id="close-song-modal">Đóng</button>
+        </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        var player;
+
+        document.getElementById('select-song').addEventListener('click', () => {
+            document.getElementById('song-modal').style.display = 'flex';
+        });
+
+        document.getElementById('close-song-modal').addEventListener('click', () => {
+            document.getElementById('song-modal').style.display = 'none';
+        });
+
+        document.querySelectorAll('.song-item').forEach(item => {
+            item.addEventListener('click', () => {
+                playSong(item.dataset.id, item.textContent);
+                document.getElementById('song-modal').style.display = 'none';
+            });
+        });
+
+        function playSong(videoId, songName) {
+            if (player) player.destroy();
+
+            player = new YT.Player('player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 0,
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'fs': 0,
+                    'iv_load_policy': 3
+                },
+                events: {
+                    'onReady': (event) => {
+                        event.target.playVideo();
+                        document.getElementById('status').textContent = `Đang phát: ${songName}`;
+                        startDropTimer();
+                    }
+                }
+            });
+        }
+
+        function startDropTimer() {
+            function triggerDrop() {
+                const isEpic = Math.random() < 0.4;
+                showEpicEffect(isEpic);
+                const delay = isEpic ? Math.random()*45000 + 35000 : Math.random()*35000 + 15000;
+                setTimeout(triggerDrop, delay);
+            }
+            triggerDrop();
+        }
+
+        function showEpicEffect(isEpic) {
+            document.getElementById('effect-overlay').className = 'flash-epic';
+            document.getElementById('effect-overlay').style.display = 'block';
+            setTimeout(() => document.getElementById('effect-overlay').style.display = 'none', isEpic ? 1800 : 1000);
+
+            document.getElementById('drop-text').textContent = isEpic ? "SIÊUUUUUU 🤯🤩" : "DROP!";
+            document.getElementById('drop-text').className = isEpic ? 'drop-epic' : 'drop-normal';
+
+            if (isEpic) {
+                document.body.classList.add('shake-screen');
+                setTimeout(() => document.body.classList.remove('shake-screen'), 500);
+            }
+
+            const count = isEpic ? 80 : 35;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = '50%';
+                p.style.top = '50%';
+                p.style.background = isEpic ? ['#ffff00','#ff00ff','#00ffff','#ff4500'][Math.floor(Math.random()*4)] : '#ffff00';
+                document.getElementById('particles').appendChild(p);
+
+                const angle = Math.random() * 360;
+                const dist = isEpic ? 700 + Math.random()*500 : 400 + Math.random()*300;
+                const dx = Math.cos(angle * Math.PI / 180) * dist;
+                const dy = Math.sin(angle * Math.PI / 180) * dist;
+
+                p.animate([
+                    { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 1 },
+                    { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: isEpic ? 2200 + Math.random()*1800 : 1600 + Math.random()*1200,
+                    easing: 'ease-out'
+                });
+
+                setTimeout(() => p.remove(), 5000);
+            }
+        }
+    </script>
+</body>
+</html>
