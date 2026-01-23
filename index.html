@@ -18,19 +18,48 @@
         @keyframes glow { from {text-shadow:0 0 8px #ff0000;} to {text-shadow:0 0 16px #ff0000;} }
         #player-container { position:absolute; inset:0; z-index:1; }
         #player { width:100%; height:100%; object-fit:cover; }
-        #controls {
-            position:absolute; bottom:80px; left:50%; transform:translateX(-50%); z-index:10;
+        /* Nút phát bài hát ở giữa màn hình */
+        #play-button-container {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10;
         }
-        button {
-            background:rgba(76,175,80,0.92); color:white; border:none; padding:18px 48px; font-size:clamp(1.1rem,5vw,1.3rem);
-            border-radius:60px; cursor:pointer; box-shadow:0 0 25px rgba(76,175,80,0.7); transition:all 0.3s;
+        #play-button {
+            background:rgba(76,175,80,0.92); color:white; border:none; padding:24px 60px; font-size:clamp(1.4rem,6vw,2rem);
+            border-radius:80px; cursor:pointer; box-shadow:0 0 30px rgba(76,175,80,0.8); transition:all 0.3s;
         }
-        button:hover, button:active { transform:scale(1.08); box-shadow:0 0 40px rgba(76,175,80,1); }
+        #play-button:hover, #play-button:active { transform:scale(1.1); box-shadow:0 0 50px rgba(76,175,80,1); }
+        /* Nút STOP */
+        #stop-button-container {
+            position:absolute; bottom:80px; right:20px; z-index:10; display:none;
+        }
+        #stop-button {
+            background:rgba(255,0,0,0.9); color:white; border:none; padding:16px 32px; font-size:clamp(1.2rem,5vw,1.6rem);
+            border-radius:60px; cursor:pointer; box-shadow:0 0 25px rgba(255,0,0,0.7); transition:all 0.3s;
+        }
+        #stop-button:hover, #stop-button:active { transform:scale(1.1); box-shadow:0 0 40px rgba(255,0,0,1); }
+        /* Progress dưới chân trang */
+        #progress-container {
+            position:absolute; bottom:70px; left:50%; transform:translateX(-50%); z-index:10;
+            width:80%; max-width:600px; display:none; align-items:center; gap:12px; justify-content:center;
+        }
+        progress {
+            flex:1; height:10px; border-radius:5px; background:#333; appearance:none;
+        }
+        progress::-webkit-progress-bar { background:#333; border-radius:5px; }
+        progress::-webkit-progress-value { background:rgba(76,175,80,0.9); border-radius:5px; }
+        #progress-percent {
+            font-size:clamp(1.2rem,5vw,1.8rem); font-weight:bold;
+        }
+        /* Đồng hồ VN */
+        #clock {
+            position:absolute; top:60px; right:16px; z-index:10; font-size:clamp(1rem,4vw,1.4rem);
+            background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:8px;
+        }
         #status {
             position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
             font-size:clamp(0.95rem,3.8vw,1.1rem); color:#eee; text-align:center; z-index:10; padding:0 24px; max-width:90%;
-            background:rgba(0,0,0,0.4); border-radius:12px; padding:8px 16px;
+            background:rgba(0,0,0,0.4); border-radius:12px; padding:8px 16px; opacity:1; transition:opacity 1s ease;
         }
+        #status.fade-out { opacity:0; }
         #song-modal {
             position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:30; padding:16px;
         }
@@ -50,6 +79,22 @@
             color: #aaa;
             font-style: italic;
         }
+        /* Popup xác nhận STOP */
+        #confirm-modal {
+            position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:40;
+        }
+        .confirm-content {
+            background:rgba(50,50,50,0.95); padding:30px; border-radius:16px; text-align:center; max-width:300px;
+        }
+        .confirm-content h3 { margin-bottom:20px; font-size:1.4rem; }
+        .confirm-buttons {
+            display:flex; justify-content:center; gap:20px;
+        }
+        .confirm-btn {
+            padding:12px 30px; border-radius:30px; cursor:pointer; font-size:1.1rem;
+        }
+        #confirm-ok { background:#ff4444; }
+        #confirm-cancel { background:#666; }
         /* Hiệu ứng drop cực hay */
         #effect-overlay { position:absolute; inset:0; pointer-events:none; z-index:15; display:none; }
         .flash-epic { animation:flashEpic 1.2s ease-out; }
@@ -75,16 +120,29 @@
     <div id="drop-text"></div>
     <div id="particles"></div>
 
-    <div id="controls">
-        <button id="select-song">Chọn bài hát để phát</button>
+    <div id="clock">Đồng hồ VN: </div>
+
+    <!-- Nút phát bài hát ở giữa màn hình -->
+    <div id="play-button-container">
+        <button id="play-button">Phát bài hát</button>
     </div>
 
-    <div id="status">Chọn bài hát để nghe và chờ drop siêu đỉnh nhé anh Dự!</div>
+    <!-- Nút STOP -->
+    <div id="stop-button-container">
+        <button id="stop-button">🛑 STOP</button>
+    </div>
+
+    <div id="progress-container">
+        <progress id="progress-bar" value="0" max="100"></progress>
+        <span id="progress-percent">0%</span>
+    </div>
+
+    <div id="status">Bấm nút giữa màn hình để chọn và phát bài hát</div>
 
     <!-- Modal danh sách yêu thích -->
     <div id="song-modal">
         <div class="modal-content">
-            <h2>Danh sách bài yêu thích</h2>
+            <h2 id="list-title">Danh sách bài yêu thích</h2>
             <div class="song-item" data-id="ZPuDZJk4Kpk">Em nào có tội remix</div>
             <div class="song-item" data-id="bqOPZRiDUTM">Mở lối cho em - phần 1</div>
             <div class="song-item" data-id="oW3ZnOOuTA4">Mở lối cho em - phần 2</div>
@@ -97,19 +155,43 @@
             <div class="song-item" data-id="d5Co9mMkTUw">Hẹn hò nhưng không yêu remix</div>
             <div class="song-item" data-id="xUgHL-6_QS4">Mạnh bà - Linh Hương Luz</div>
             <div class="song-item" data-id="T6_NLQjxvVo">Có mình và ta remix</div>
-
-            <!-- Dòng thông báo mới thêm, ngay dưới danh sách, gần nút Đóng -->
+            <div class="song-item" data-id="HVBnpC1b_5Y">Cry for me - Michita ft. Ami</div>
+            <div class="song-item" data-id="Jnv2dSiM3Sk">Ưng thì nói remix - QZ REMIX</div>
+            <div class="song-item" data-id="JJL3lOa-JjE">CƯỚI CHÍNH REMIX (cực bass)</div>
             <div class="update-note">"Bài hát mới sẽ cập nhật ở đây nếu có"</div>
-
             <button class="close-btn" id="close-song-modal">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Popup xác nhận STOP -->
+    <div id="confirm-modal">
+        <div class="confirm-content">
+            <h3>Bạn có chắc muốn dừng nhạc không?</h3>
+            <div class="confirm-buttons">
+                <button class="confirm-btn" id="confirm-ok">OK</button>
+                <button class="confirm-btn" id="confirm-cancel">Cancel</button>
+            </div>
         </div>
     </div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         var player;
+        var progressTimer;
 
-        document.getElementById('select-song').addEventListener('click', () => {
+        // Đồng hồ real-time VN
+        function updateClock() {
+            const now = new Date();
+            const options = { timeZone: 'Asia/Ho_Chi_Minh', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('clock').textContent = `Đồng hồ VN: ${now.toLocaleTimeString('vi-VN', options)}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Nút phát ở giữa bấm mở popup
+        document.getElementById('play-button').addEventListener('click', () => {
+            const songCount = document.querySelectorAll('.song-item').length;
+            document.getElementById('list-title').textContent = `Danh sách bài yêu thích (${songCount} bài)`;
             document.getElementById('song-modal').style.display = 'flex';
         });
 
@@ -121,11 +203,41 @@
             item.addEventListener('click', () => {
                 playSong(item.dataset.id, item.textContent);
                 document.getElementById('song-modal').style.display = 'none';
+                // Ẩn nút phát chính sau khi chọn bài
+                document.getElementById('play-button-container').style.display = 'none';
+                // Hiện nút STOP
+                document.getElementById('stop-button-container').style.display = 'block';
             });
+        });
+
+        // Nút STOP với xác nhận
+        document.getElementById('stop-button').addEventListener('click', () => {
+            document.getElementById('confirm-modal').style.display = 'flex';
+        });
+
+        document.getElementById('confirm-cancel').addEventListener('click', () => {
+            document.getElementById('confirm-modal').style.display = 'none';
+        });
+
+        document.getElementById('confirm-ok').addEventListener('click', () => {
+            document.getElementById('confirm-modal').style.display = 'none';
+            if (player) {
+                player.stopVideo();
+                player.destroy();
+                player = null;
+            }
+            if (progressTimer) clearInterval(progressTimer);
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('progress-bar').value = 0;
+            document.getElementById('progress-percent').textContent = '0%';
+            document.getElementById('status').textContent = "Nhạc đã dừng. Bấm nút giữa màn hình để phát lại";
+            document.getElementById('stop-button-container').style.display = 'none';
+            document.getElementById('play-button-container').style.display = 'block';
         });
 
         function playSong(videoId, songName) {
             if (player) player.destroy();
+            if (progressTimer) clearInterval(progressTimer);
 
             player = new YT.Player('player', {
                 height: '100%',
@@ -143,11 +255,51 @@
                 events: {
                     'onReady': (event) => {
                         event.target.playVideo();
-                        document.getElementById('status').textContent = `Đang phát: ${songName}`;
+                        showTemporaryStatus(`Đang phát: ${songName}`);
+                        document.getElementById('progress-container').style.display = 'flex';
                         startDropTimer();
+                        startProgressUpdate();
+                    },
+                    'onStateChange': (event) => {
+                        if (event.data === YT.PlayerState.ENDED) {
+                            const songCount = document.querySelectorAll('.song-item').length;
+                            document.getElementById('list-title').textContent = `Danh sách bài yêu thích (${songCount} bài)`;
+                            document.getElementById('song-modal').style.display = 'flex';
+                            document.getElementById('progress-container').style.display = 'none';
+                            document.getElementById('progress-bar').value = 0;
+                            document.getElementById('progress-percent').textContent = '0%';
+                            document.getElementById('stop-button-container').style.display = 'none';
+                            document.getElementById('play-button-container').style.display = 'block';
+                        }
                     }
                 }
             });
+        }
+
+        function showTemporaryStatus(text) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            statusEl.classList.remove('fade-out');
+            setTimeout(() => {
+                statusEl.classList.add('fade-out');
+            }, 15000);
+        }
+
+        function startProgressUpdate() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+
+            progressTimer = setInterval(() => {
+                if (player && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    const duration = player.getDuration();
+                    const currentTime = player.getCurrentTime();
+                    if (duration > 0) {
+                        const percent = (currentTime / duration) * 100;
+                        progressBar.value = percent;
+                        progressPercent.textContent = `${Math.round(percent)}%`;
+                    }
+                }
+            }, 1000);
         }
 
         function startDropTimer() {
@@ -198,6 +350,9 @@
                 setTimeout(() => p.remove(), 5000);
             }
         }
+
+        // Ban đầu status
+        document.getElementById('status').textContent = "Bấm nút giữa màn hình để chọn và phát bài hát";
     </script>
 </body>
 </html>
